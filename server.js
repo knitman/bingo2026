@@ -5,6 +5,11 @@ const io = require("socket.io")(http);
 
 app.use(express.static("public"));
 
+// Redirect root to hall.html
+app.get("/", (req, res) => {
+    res.redirect("/hall.html");
+});
+
 let drawPool = [];
 let called = [];
 let drawTimer = null;
