@@ -22,7 +22,8 @@
 <h3>Δημιουργία Κουπονιών</h3>
 <input type="text" id="playerName" placeholder="Όνομα Παίκτη">
 <button onclick="createTicket()">ΔΗΜΙΟΥΡΓΙΑ ΚΟΥΠΟΝΙΟΥ</button>
-<div id="qr"></div>
+
+<div id="tickets"></div>
 
 <div id="winner">
   <h2 id="wname"></h2>
@@ -30,7 +31,6 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="qrcode.min.js"></script>
 <script>
 const socket = io();
 
@@ -45,6 +45,13 @@ socket.on("number", n => {
     numberDiv.classList.remove("animate");
     void numberDiv.offsetWidth;
     numberDiv.classList.add("animate");
+
+    // Επισημαίνει αριθμούς στα κουπόνια
+    document.querySelectorAll(".ticket").forEach(ticket => {
+        ticket.querySelectorAll(".cell").forEach(cell => {
+            if (+cell.textContent === n) cell.classList.add("mark");
+        });
+    });
 });
 
 socket.on("winner", w => {
@@ -60,12 +67,25 @@ function createTicket() {
         .slice(0, 25);
     const id = Math.random().toString(36).slice(2);
 
+    // Στέλνουμε στον server
     socket.emit("createTicket", { id, nums, player });
 
-    const link = location.origin + "/ticket.html?id=" + id;
-    const qrDiv = document.getElementById("qr");
-    qrDiv.innerHTML = "";
-    new QRCode(qrDiv, { text: link, width:128, height:128, colorDark:"#000", colorLight:"#fff", correctLevel:QRCode.CorrectLevel.H });
+    // Δημιουργούμε το κουπόνι στην οθόνη
+    const ticketsDiv = document.getElementById("tickets");
+    const ticketDiv = document.createElement("div");
+    ticketDiv.className = "ticket";
+    ticketDiv.innerHTML = "<h4>" + player + "</h4>";
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    nums.forEach(n => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = n;
+        grid.appendChild(cell);
+    });
+    ticketDiv.appendChild(grid);
+    ticketsDiv.appendChild(ticketDiv);
 }
 </script>
 </body>
