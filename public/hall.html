@@ -2,110 +2,143 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<title>Bingo Hall TV</title>
-<style>
-body { font-family: Arial; text-align:center; background:#222; color:#fff; }
-#number { font-size:120px; font-weight:bold; margin:50px; }
-#number.animate { animation: bounce 0.7s; }
+<title>Bingo Hall</title>
 
-@keyframes bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.6); color: #ff0; }
-  100% { transform: scale(1); color:#fff; }
+<style>
+body {
+  background: #1e1e1e;
+  color: white;
+  font-family: Arial;
+  text-align: center;
 }
 
-button, select, input { font-size:24px; margin:10px; padding:10px; }
+#number {
+  font-size: 140px;
+  margin: 40px;
+  font-weight: bold;
+}
 
-.ticket { display:inline-block; background:#333; padding:10px; margin:10px; border-radius:10px; }
-.grid { display:grid; grid-template-columns:repeat(5,50px); grid-gap:5px; justify-content:center; }
-.cell { width:50px; height:50px; line-height:50px; border-radius:50%; background:#fff; border:2px solid #333; font-weight:bold; color:#000; font-size:18px; }
-.cell.mark { background:#4caf50; color:#fff; transition:all 0.5s; }
+.animate {
+  animation: pop 0.6s ease;
+}
 
-#winner { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); color:#fff; justify-content:center; align-items:center; flex-direction:column; font-size:24px; }
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.6); }
+  100% { transform: scale(1); }
+}
 
-#tickets { margin-top:20px; }
+button, select, input {
+  font-size: 22px;
+  padding: 10px;
+  margin: 8px;
+}
+
+#tickets {
+  margin-top: 30px;
+}
+
+.ticket {
+  background: #333;
+  padding: 10px;
+  margin: 10px;
+  display: inline-block;
+  border-radius: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 50px);
+  gap: 6px;
+  justify-content: center;
+}
+
+.cell {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #ffffff;     /* κύκλος */
+  color: #000000;          /* ⬅️ ΤΟ FIX */
+  font-weight: bold;
+  line-height: 50px;
+  border: 2px solid #333;
+  font-size: 18px;
+}
+
+.cell.mark {
+  background: #4caf50;
+  color: white;
+}
 </style>
 </head>
+
 <body>
+
 <h1>BINGO HALL</h1>
 
 <div id="number">--</div>
 
-<label for="speed">Ταχύτητα κλήρωσης:</label>
 <select id="speed">
   <option value="5000">5 δευτ</option>
   <option value="3000">3 δευτ</option>
   <option value="1500">1.5 δευτ</option>
 </select>
 
-<button onclick="startDraw()">START</button>
+<br>
+<button onclick="start()">START</button>
 
-<h3>Δημιουργία Κουπονιών</h3>
-<input type="text" id="playerName" placeholder="Όνομα Παίκτη">
-<button onclick="createTicket()">ΔΗΜΙΟΥΡΓΙΑ ΚΟΥΠΟΝΙΟΥ</button>
+<h3>Δημιουργία Κουπονιού</h3>
+<input id="player" placeholder="Όνομα παίκτη">
+<button onclick="createTicket()">ΔΗΜΙΟΥΡΓΙΑ</button>
 
 <div id="tickets"></div>
-
-<div id="winner">
-  <h2 id="wname"></h2>
-  <p id="wwins"></p>
-</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
 
-function startDraw() {
-    const speed = +document.getElementById("speed").value;
-    socket.emit("startDraw", speed);
+function start() {
+  const speed = +document.getElementById("speed").value;
+  socket.emit("start", speed);
 }
 
 socket.on("number", n => {
-    const numberDiv = document.getElementById("number");
-    numberDiv.textContent = n;
-    numberDiv.classList.remove("animate");
-    void numberDiv.offsetWidth;
-    numberDiv.classList.add("animate");
+  const el = document.getElementById("number");
+  el.textContent = n;
+  el.classList.remove("animate");
+  void el.offsetWidth;
+  el.classList.add("animate");
 
-    // Σημειώνει αριθμούς στα κουπόνια
-    document.querySelectorAll(".ticket").forEach(ticket => {
-        ticket.querySelectorAll(".cell").forEach(cell => {
-            if (+cell.textContent === n) cell.classList.add("mark");
-        });
-    });
-});
-
-socket.on("winner", w => {
-    document.getElementById("wname").textContent = w.name;
-    document.getElementById("wwins").textContent = "Νίκες: " + (w.wins || 1);
-    document.getElementById("winner").style.display = "flex";
+  document.querySelectorAll(".cell").forEach(c => {
+    if (+c.textContent === n) c.classList.add("mark");
+  });
 });
 
 function createTicket() {
-    const player = document.getElementById("playerName").value || "Άγνωστος";
-    const nums = Array.from({ length: 90 }, (_, i) => i + 1)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 25);
-    const id = Math.random().toString(36).slice(2);
+  const name = document.getElementById("player").value || "Παίκτης";
 
-    socket.emit("createTicket", { id, nums, player });
+  const nums = Array.from({ length: 90 }, (_, i) => i + 1)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 25);
 
-    const ticketsDiv = document.getElementById("tickets");
-    const ticketDiv = document.createElement("div");
-    ticketDiv.className = "ticket";
-    ticketDiv.innerHTML = "<h4>" + player + "</h4>";
+  const ticket = document.createElement("div");
+  ticket.className = "ticket";
+  ticket.innerHTML = `<h4>${name}</h4>`;
 
-    const grid = document.createElement("div");
-    grid.className = "grid";
-    nums.forEach(n => {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = n; // <-- Αυτό είναι το πιο σημαντικό
-        grid.appendChild(cell);
-    });
-    ticketDiv.appendChild(grid);
-    ticketsDiv.appendChild(ticketDiv);
+  const grid = document.createElement("div");
+  grid.className = "grid";
+
+  nums.forEach(n => {
+    const c = document.createElement("div");
+    c.className = "cell";
+    c.textContent = n;
+    grid.appendChild(c);
+  });
+
+  ticket.appendChild(grid);
+  document.getElementById("tickets").appendChild(ticket);
 }
 </script>
+
 </body>
 </html>
