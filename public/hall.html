@@ -3,7 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <title>Bingo Hall TV</title>
-<link rel="stylesheet" href="style.css">
+<style>
+body { font-family: Arial; text-align:center; background:#222; color:#fff; }
+#number { font-size:120px; font-weight:bold; margin:50px; }
+#number.animate { animation: bounce 0.7s; }
+
+@keyframes bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.6); color: #ff0; }
+  100% { transform: scale(1); color:#fff; }
+}
+
+button, select, input { font-size:24px; margin:10px; padding:10px; }
+
+.ticket { display:inline-block; background:#333; padding:10px; margin:10px; border-radius:10px; }
+.grid { display:grid; grid-template-columns:repeat(5,50px); grid-gap:5px; justify-content:center; }
+.cell { width:50px; height:50px; line-height:50px; border-radius:50%; background:#fff; border:2px solid #333; font-weight:bold; color:#000; font-size:18px; }
+.cell.mark { background:#4caf50; color:#fff; transition:all 0.5s; }
+
+#winner { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); color:#fff; justify-content:center; align-items:center; flex-direction:column; font-size:24px; }
+
+#tickets { margin-top:20px; }
+</style>
 </head>
 <body>
 <h1>BINGO HALL</h1>
@@ -46,7 +67,7 @@ socket.on("number", n => {
     void numberDiv.offsetWidth;
     numberDiv.classList.add("animate");
 
-    // Επισημαίνει αριθμούς στα κουπόνια
+    // Σημειώνει αριθμούς στα κουπόνια
     document.querySelectorAll(".ticket").forEach(ticket => {
         ticket.querySelectorAll(".cell").forEach(cell => {
             if (+cell.textContent === n) cell.classList.add("mark");
@@ -67,10 +88,8 @@ function createTicket() {
         .slice(0, 25);
     const id = Math.random().toString(36).slice(2);
 
-    // Στέλνουμε στον server
     socket.emit("createTicket", { id, nums, player });
 
-    // Δημιουργούμε το κουπόνι στην οθόνη
     const ticketsDiv = document.getElementById("tickets");
     const ticketDiv = document.createElement("div");
     ticketDiv.className = "ticket";
@@ -81,7 +100,7 @@ function createTicket() {
     nums.forEach(n => {
         const cell = document.createElement("div");
         cell.className = "cell";
-        cell.textContent = n;
+        cell.textContent = n; // <-- Αυτό είναι το πιο σημαντικό
         grid.appendChild(cell);
     });
     ticketDiv.appendChild(grid);
