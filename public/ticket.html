@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Το Κουπόνι Μου</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>ΤΟ ΚΟΥΠΟΝΙ ΜΟΥ</h2>
+<div id="grid"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const params = new URLSearchParams(location.search);
+const ticketId = params.get("id");
+
+socket.emit("requestTicket", ticketId);
+
+socket.on("ticketData", data => {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    data.nums.forEach(n => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = n;
+        grid.appendChild(cell);
+    });
+});
+
+socket.on("number", n => {
+    document.querySelectorAll(".cell").forEach(cell => {
+        if (+cell.textContent === n) cell.classList.add("mark");
+    });
+});
+</script>
+</body>
+</html>

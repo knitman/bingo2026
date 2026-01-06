@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Bingo Hall TV</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>BINGO HALL</h1>
+
+<div id="number">--</div>
+
+<label for="speed">Ταχύτητα κλήρωσης:</label>
+<select id="speed">
+  <option value="5000">5 δευτ</option>
+  <option value="3000">3 δευτ</option>
+  <option value="1500">1.5 δευτ</option>
+</select>
+
+<button onclick="startDraw()">START</button>
+
+<h3>Δημιουργία Κουπονιών</h3>
+<input type="text" id="playerName" placeholder="Όνομα Παίκτη">
+<button onclick="createTicket()">ΔΗΜΙΟΥΡΓΙΑ ΚΟΥΠΟΝΙΟΥ</button>
+<div id="qr"></div>
+
+<div id="winner">
+  <h2 id="wname"></h2>
+  <p id="wwins"></p>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="qrcode.min.js"></script>
+<script>
+const socket = io();
+
+function startDraw() {
+    const speed = +document.getElementById("speed").value;
+    socket.emit("startDraw", speed);
+}
+
+socket.on("number", n => {
+    const numberDiv = document.getElementById("number");
+    numberDiv.textContent = n;
+    numberDiv.classList.remove("animate");
+    void numberDiv.offsetWidth;
+    numberDiv.classList.add("animate");
+});
+
+socket.on("winner", w => {
+    document.getElementById("wname").textContent = w.name;
+    document.getElementById("wwins").textContent = "Νίκες: " + (w.wins || 1);
+    document.getElementById("winner").style.display = "flex";
+});
+
+function createTicket() {
+    const player = document.getElementById("playerName").value || "Άγνωστος";
+    const nums = Array.from({ length: 90 }, (_, i) => i + 1)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 25);
+    const id = Math.random().toString(36).slice(2);
+
+    socket.emit("createTicket", { id, nums, player });
+
+    const link = location.origin + "/ticket.html?id=" + id;
+    const qrDiv = document.getElementById("qr");
+    qrDiv.innerHTML = "";
+    new QRCode(qrDiv, { text: link, width:128, height:128, colorDark:"#000", colorLight:"#fff", correctLevel:QRCode.CorrectLevel.H });
+}
+</script>
+</body>
+</html>
